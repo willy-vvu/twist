@@ -24,7 +24,8 @@
         /*color:white;*/
         top:47.5vh;
         font-size:5vh;
-        line-height:1vh;
+        line-height:7vh;
+        pointer-events:none;
       }
       #helptext{
         transition: opacity 1s 1s;
@@ -47,9 +48,9 @@
     <script src="p5.js"></script>
   </head>
   <body>
-    <div id="helptext" class="text">🡠 Arrow Keys to Begin 🡢</div>
+    <div id="helptext" class="text">🡠 Arrow Keys or Touch to Begin 🡢</div>
     <div id="continuousscore" class="text">0</div>
-    <div id="gameovermodal" class="text" style="display:none"><b>GAME OVER</b><p><span id="gameoverscore"></span></p><p>🡠 or 🡢 to Retry</p></div>
+    <div id="gameovermodal" class="text" style="display:none"><b>GAME OVER</b><br><span id="gameoverscore"></span><br>🡠 or 🡢 to Retry</div>
     <script>
 
 $helptext = document.getElementById("helptext");
@@ -87,7 +88,8 @@ var snake = {
 }
 
 var levelProgress = -230;
-var highscore = skiptutorial?LEVEL*3:0;
+var NUM_LEVELS = 2;
+var highscore = skiptutorial?LEVEL*NUM_LEVELS:0;
 var levelgenstart = highscore;
 var playerRot = 0;
 var playerRotSmooth = 0;
@@ -96,36 +98,55 @@ var seed = Date.now();
 var firstLoad = true;
 
 function keyPressed(event){
+  if(event.keyCode == 37){
+    buttonPressed(false);
+    return false;
+  }
+  if(event.keyCode == 39){
+    buttonPressed(true);
+    return false;
+  }
+}
+function mousePressed(){
+  if(mouseX>3*width/5){
+    buttonPressed(true);
+    return false;
+  }
+  if(mouseX<2*width/5){
+    buttonPressed(false);
+    return false;
+  }
+}
+
+function buttonPressed(buttonRight){
   if(gameover>0){
-    if(gameover > 30 && (event.keyCode == 37 || event.keyCode == 39)){
+    if(gameover > 30){
       gameover = 0;
       $gameovermodal.style.display = "none";
       levelProgress = -200;
       playerRot = 0;
       playerRotSmooth = 0;
-      levelgenstart = LEVEL*min(3,Math.floor(highscore/LEVEL));
+      levelgenstart = LEVEL*min(NUM_LEVELS,Math.floor(highscore/LEVEL));
       seed = Date.now();
     }
   }
   else{
-    if(event.keyCode == 37 || event.keyCode == 39){
-      if(firstLoad){
-        $helptext.style.opacity = 0;
-      }
-      firstLoad = false;
-      if(event.keyCode == 37){
-        playerRot--;
-      }
-      else{
-        playerRot++;
-      }
+    if(firstLoad){
+      $helptext.style.opacity = 0;
+    }
+    firstLoad = false;
+    if(buttonRight){
+      playerRot++;
+    }
+    else{
+      playerRot--;
     }
   }
 }
 function getSnakeFactor(progress){
   snake.xy = 0.1;
   snake.z = 0.1;
-  if(progress < 200){
+  if(progress < 0){
     return;
   }
   var normprogress = levelgenstart+progress;
@@ -146,17 +167,9 @@ function getSnakeFactor(progress){
       snake.z = 0.7;
     }
   }
-  else if(normprogress < LEVEL*3){
-    if(levelprogress < LEVEL*0.8){
-      snake.xy = 0.7;
-    }
-    if(levelprogress > LEVEL*0.5 && levelprogress < LEVEL*0.8){
-      snake.z = 1;
-    }
-  }
   else{
-    snake.xy = 1
-    snake.z = 1
+    snake.xy = 0.9;
+    snake.z = 0.9;
   }
 }
 function getObstacle(progress){
@@ -202,31 +215,11 @@ function getObstacle(progress){
       obstacle.juketime = 100;
     }
   }
-  else if(normprogress < LEVEL*3){
-    var frequency = levelprogress <= LEVEL*0.5 ? 90 :
-                    levelprogress <= LEVEL*0.8 ? 60  :
-                                                  Infinity;
-
-    if(progress%frequency == 0){
-      obstacle.type = types[Math.round(noise(progress,seed)*10*types.length)%types.length];
+  else{ // Infinite run
+    if(progress%60 == 0 || progress%30 == 0 && noise(progress,seed)*100%1 > max(0,0.8-(normprogress - LEVEL*NUM_LEVELS)/LEVEL/2)){
+      obstacle.type = progress%240==0?types[Math.round(noise(progress,seed)*10*types.length)%types.length]:progress%60==0&&normprogress < LEVEL*4?"single":flow[Math.round(noise(progress,seed)*10*flow.length)%flow.length];
       obstacle.rotation = Math.round(noise(progress,seed)*128)%4;
-      obstacle.juke = levelprogress < LEVEL*0.2 ? "" : juketypes[Math.round(noise(progress,seed)*10*juketypes.length)%juketypes.length];
-      obstacle.juketime = 60;
-    }
-  }
-  else if(normprogress < LEVEL*4){ // Infinite run
-    if(progress%30 == 0){
-      obstacle.type = progress%240==0?types[Math.round(noise(progress,seed)*10*types.length)%types.length]:progress%60==0?"single":flow[Math.round(noise(progress,seed)*10*flow.length)%flow.length];
-      obstacle.rotation = Math.round(noise(progress,seed)*128)%4;
-      obstacle.juke = juketypes[Math.round(noise(progress,seed)*10*juketypes.length)%juketypes.length];
-      obstacle.juketime = 60;
-    }
-  }
-  else{ // Infinite run (hard)
-    if(progress%30 == 0){
-      obstacle.type = types[Math.round(noise(progress,seed)*10*types.length)%types.length];
-      obstacle.rotation = Math.round(noise(progress,seed)*128)%4;
-      obstacle.juke = juketypes[Math.round(noise(progress,seed)*10*juketypes.length)%juketypes.length];
+      obstacle.juke = normprogress < LEVEL*2.3 ? "" : juketypes[Math.round(noise(progress,seed)*10*juketypes.length)%juketypes.length];
       obstacle.juketime = 60;
     }
   }
@@ -293,7 +286,7 @@ function logic(){
     }
   }
   if(!gameover){
-    var msElapsed = max(levelgenstart + levelProgress - LEVEL*3, 0)*1000/(bpm/2);
+    var msElapsed = max(levelgenstart + levelProgress - LEVEL*NUM_LEVELS, 0)*1000/(bpm/2);
     highscore = max(highscore,levelgenstart + levelProgress);
     if(!skiptutorial && msElapsed > 0){
       skiptutorial = true;
