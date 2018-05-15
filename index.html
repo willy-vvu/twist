@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Twist</title>
+    <title>TWIST</title>
     <style>
       html, body {
         margin: 0;
@@ -22,19 +22,14 @@
         right:0;
         text-align:center;
         /*color:white;*/
-        top:47.5vh;
+        top:40vh;
         font-size:5vh;
         line-height:7vh;
         pointer-events:none;
+        color:inherit;
       }
       #helptext{
         transition: opacity 1s 1s;
-      }
-      #gameovermodal{
-        top:43vh;
-      }
-      #gameover{
-        top:43vh;
       }
       #continuousscore {
         /*bottom:5vh;*/
@@ -44,13 +39,17 @@
         text-align:left;
         opacity:0.8;
       }
+      .arrow{
+        color:inherit;
+        font-size:1.5em;
+      }
     </style>
     <script src="p5.js"></script>
   </head>
   <body>
-    <div id="helptext" class="text">🡠 Arrow Keys or Touch to Begin 🡢</div>
+    <div id="helptext" class="text"><b>TWIST</b><br><br><span class="arrow">←</span> Arrow Keys or Touch to Begin <span class="arrow">→</span></div>
     <div id="continuousscore" class="text">0</div>
-    <div id="gameovermodal" class="text" style="display:none"><b>GAME OVER</b><br><span id="gameoverscore"></span><br>🡠 or 🡢 to Retry</div>
+    <div id="gameovermodal" class="text" style="display:none"><b>GAME OVER</b><br><span id="gameoverscore"></span><br><span class="arrow">←</span> or <span class="arrow">→</span> to Retry</div>
     <script>
 
 $helptext = document.getElementById("helptext");
@@ -64,7 +63,7 @@ function setup() {
   window.onresize = ()=>resizeCanvas(window.innerWidth, window.innerHeight);
 
 }
-var bpm = Math.min(Math.max(parseInt(window.location.hash.slice(1))||128,90),180);
+var bpm = Math.min(Math.max(parseInt(window.location.hash.slice(1))||130,90),180);
 var skiptutorial = localStorage&&localStorage.skiptutorial || false;
 
 var lastLogic = Date.now();
@@ -292,7 +291,7 @@ function logic(){
       skiptutorial = true;
       localStorage.skiptutorial = true;
     }
-    var score = msElapsed > 0? /*Math.floor(msElapsed/1000/60)+":"+*/Math.floor(msElapsed/1000)+"."+nf(Math.floor(msElapsed/10)%100,2):"" //Math.floor((levelProgress-1)/30);
+    var score = msElapsed > 0? /*Math.floor(msElapsed/1000/60)+":"+*/Math.floor(msElapsed/1000)+"."+nf(Math.floor(msElapsed/10)%100,2)+"s":"" //Math.floor((levelProgress-1)/30);
     // score = score > 0 ? score : "";
     $continuousscore.innerText = score;
     if(collision){
@@ -345,7 +344,7 @@ function draw() {
 
   stroke(bcolor)
 
-  perspective(PI/3,width/height,10,20000);
+  perspective(PI/3,width/height,100,20000);
   noStroke();
   for(var i = 0; i < 200; i++){
     var coord = i+levelProgress;
